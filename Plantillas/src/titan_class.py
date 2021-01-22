@@ -88,7 +88,7 @@ class Titan ():
         self.low_memory = low_memory
         self.memory_map = memory_map
         self.float_precision = float_precision
-        # self.storage_options = storage_options
+        self.storage_options = storage_options
 
         # Creation of dataframe
         self.df = pd.read_csv(filepath_or_buffer= self.path, sep= self.sep,
@@ -109,7 +109,8 @@ class Titan ():
                                 doublequote= self.doublequote, escapechar= self.escapechar, comment= self.comment,
                                 encoding= self.encoding, dialect= self.dialect, error_bad_lines= self.error_bad_lines, 
                                 warn_bad_lines= self.warn_bad_lines, delim_whitespace= self.delim_whitespace, 
-                                low_memory= self.low_memory, memory_map= self.memory_map, float_precision= self.float_precision) 
+                                low_memory= self.low_memory, memory_map= self.memory_map, float_precision= self.float_precision,
+                                storage_options= self.storage_options) 
 
         if wish == True:
             return self.df
@@ -206,5 +207,130 @@ class Titan ():
 
             print(f'Changed from {before} to {after}')
 
-    def nan_manager(self):
-        pass
+
+    def nan_manager(self, column= None, position= None, drop_na= False, fill_na= False, axis=0, 
+                    subset=None, value=None, method=None, limit=None, downcast=None, inplace=True, 
+                    how='any'):
+        """
+        ---What it does---
+        This functions allows the user to either fill or drop NaN values in a dataframe, using the fillna() and dropna() functions of
+        the pandas library.
+        ---What it needs---
+            - Location of the data:
+                * Name of the column (column)
+                * Position of the column (position)
+                *
+            ---What it returns---
+        This function does not return anything
+        """
+
+        self.column = column
+        self.position = position
+        self.axis = axis
+        self.inplace = inplace
+
+
+        if drop_na == True:
+            self.how = how
+
+            print('Dropping data...')
+
+            if column != None:
+                print(f"Dropping NaN values by column name\n")
+            
+                self.df[column].dropna(axis= self.axis, how= self.how, inplace= self.inplace)
+
+            if position != None:
+                print(f"Dropping NaN values by position\n")
+                
+                self.df.iloc[:, position].dropna(axis= self.axis, how= self.how, inplace= self.inplace)
+
+            else:
+                self.df.dropna(axis= self.axis, how= self.how, inplace= self.inplace)
+
+
+        elif fill_na == True:
+            self.value = value
+            self.method = method
+            self.limit = limit
+            self.downcast = downcast
+
+            print('Filling data...')
+
+            if column != None:
+                if type(self.value) == int or type(self.value) == float:
+
+                    self.df[column].fillna(value= self.value, method= self.method, 
+                                        axis= self.axis, inplace= self.inplace, limit= self.limit,
+                                        downcast= self.downcast)
+                
+                elif type(self.value) == str:
+                    methods = ['mean', 'std', 'mode']
+
+                    if self.value in methods:
+                       
+                        if self.value == methods[0]:
+                            self.df[column].fillna(value= self.df[column].mean(), method= self.method, 
+                                        axis= self.axis, inplace= self.inplace, limit= self.limit,
+                                        downcast= self.downcast)
+
+                        if self.value == methods[1]:
+                            self.df[column].fillna(value= self.df[column].std(), method= self.method, 
+                                        axis= self.axis, inplace= self.inplace, limit= self.limit,
+                                        downcast= self.downcast)
+
+                        if self.value == methods[2]:
+                            self.df[column].fillna(value= self.df[column].mode(), method= self.method, 
+                                        axis= self.axis, inplace= self.inplace, limit= self.limit,
+                                        downcast= self.downcast)
+                    
+                    else:
+                        self.df[column].fillna(value= self.value, method= self.method, 
+                                            axis= self.axis, inplace= self.inplace, limit= self.limit,
+                                            downcast= self.downcast)
+            
+            elif position != None:
+                if type(self.value) == int or type(self.value) == float:
+                    self.df.iloc[:, position].fillna(value= self.value, method= self.method, 
+                                        axis= self.axis, inplace= self.inplace, limit= self.limit,
+                                        downcast= self.downcast)
+                
+                elif type(self.value) == str:
+                    methods = ['mean', 'std', 'mode']
+
+                    if self.value in methods:
+                        if self.value == methods[0]:
+                            self.df.iloc[:, position].fillna(value= self.df.iloc[:, position].mean(), method= self.method, 
+                                        axis= self.axis, inplace= self.inplace, limit= self.limit,
+                                        downcast= self.downcast)
+
+                        if self.value == methods[1]:
+                            self.df.iloc[:, position].fillna(value= self.df.iloc[:, position].std(), method= self.method, 
+                                        axis= self.axis, inplace= self.inplace, limit= self.limit,
+                                        downcast= self.downcast)
+
+                        if self.value == methods[2]:
+                            self.df.iloc[:, position].fillna(value= self.df.iloc[:, position].mode(), method= self.method, 
+                                        axis= self.axis, inplace= self.inplace, limit= self.limit,
+                                        downcast= self.downcast)
+                    
+                    else:
+                        self.df.iloc[:, position].fillna(value= self.value, method= self.method, 
+                                            axis= self.axis, inplace= self.inplace, limit= self.limit,
+                                            downcast= self.downcast)
+            
+
+    def return_df(self):
+        """
+                            ---What it does---
+        This function rerturs a processed dataframe.
+
+                            ---What it needs---
+            - A dataframe (self.dataframe)
+
+                            ---What it returns---
+        A dataframe (self.df)
+        """
+        return self.df
+        
+
