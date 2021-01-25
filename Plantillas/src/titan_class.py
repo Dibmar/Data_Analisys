@@ -1,5 +1,16 @@
+# EDA libs
+
 import pandas as pd
 import numpy as np
+
+# Visualization libs
+
+import matplotlib.pyplot as plt
+from datetime import date
+
+# Helpful libs
+
+import sys, os
 
 class Titan ():
     
@@ -212,15 +223,18 @@ class Titan ():
                     subset=None, value=None, method=None, limit=None, downcast=None, inplace=True, 
                     how='any'):
         """
-        ---What it does---
+                            ---What it does---
         This functions allows the user to either fill or drop NaN values in a dataframe, using the fillna() and dropna() functions of
         the pandas library.
-        ---What it needs---
+
+                            ---What it needs---
             - Location of the data:
                 * Name of the column (column)
                 * Position of the column (position)
-                *
-            ---What it returns---
+                * Almost all the attributes of the fill_na and dropna functions
+                    -> TODO implement the thresh= in the function
+                    
+                            ---What it returns---
         This function does not return anything
         """
 
@@ -332,5 +346,96 @@ class Titan ():
         A dataframe (self.df)
         """
         return self.df
-        
 
+
+    def quick_plotter(self):
+
+        def num_generator(self):    
+            to_plot = self.df.select_dtypes(include=['float64', 'int64'])
+
+            return to_plot
+
+
+        def plot_bar(self, save_image = 0):
+            """
+                                ---What it does---
+            Plots a barplot with the variable given. And if desired, saves the plot in the same directory as parent file with "<current date>_barplot.jpg" as name.
+                                ---What it needs---
+            A df_column, panda series or dictionary with numerical values
+                                ---What it returns---
+            If desired (save_image != 0), a jpg image file in the same directory using "<current date>_barplot.jpg" as name.
+            """
+
+            if self.column.sum() > 0:
+                self.column.plot(kind = 'bar')
+
+                if save_image != 0:
+                    name = str(date.today()) + '_barplot.jpg'
+                    plt.savefig(name)
+            else:
+                print(f'No numeric data to plot')
+
+
+        def plot_line(self, save_image = 0):
+            """
+                                ---What it does---
+            Plots a lineplot with the variable given. And if desired, saves the plot in the same directory as parent file with "<current date>_lineplot.jpg" as name.
+                                ---What it needs---
+            A df_column, panda series or dictionary with numerical values
+                                ---What it returns---
+            If desired (save_image != 0), a jpg image file in the same directory using "<current date>_lineplot.jpg" as name.
+            """
+
+            if self.column.sum() > 0:
+                self.column.plot()
+
+                if save_image != 0:
+                    name = str(date.today()) + '_lineplot.jpg'
+                    plt.savefig(name)
+            else:
+                print(f'No numeric data to plot')
+
+
+        def plot_pie(self, save_image = 0):
+            """
+                                ---What it does---
+            Plots a pieplot with the variable given. And if desired, saves the plot in the same directory as parent file with "<current date>_pieplot.jpg" as name.
+                                ---What it needs---
+            A df_column, panda series or dictionary with numerical values
+                                ---What it returns---
+            If desired (save_image != 0), a jpg image file in the same directory using "<current date>_pieplot.jpg" as name.
+            """
+
+            if self.column.sum() > 0:
+                data = self.column
+
+                # Create lables
+                labels = dict(self.column).keys()
+
+                # Plot pie chart
+                plt.pie(data, autopct='%1.1f%%', startangle=0, shadow= True, pctdistance = 0.5, labeldistance = 1.2)
+
+                # Legend and titles
+                plt.legend(labels, loc= 'best')
+                plt.title(self.to_plot.name, loc='center')
+
+                plt.tight_layout()
+                plt.show()
+                
+                if save_image != 0:
+                    name = str(date.today()) + '_pieplot.jpg'
+                    plt.savefig(name)
+            else:
+                print ("No numeric data to plot")
+
+
+        self.to_plot = num_generator(self)
+        func_dict = {1: plot_bar(self), 2: plot_line(self), 3: plot_pie(self)}
+
+        print("Your columns will be plotted according to your input.")
+
+        for column in self.to_plot.columns:
+            print(self.to_plot[column])
+            func_dict[1](self.to_plot[column])
+        
+        
