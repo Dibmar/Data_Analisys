@@ -177,7 +177,7 @@ class Titan ():
         return report
 
 
-    def value_changer(self, column= None, position= None, choice= None, copy= True, errors= 'raise'):
+    def value_changer(self, column= None, position= None, change_num= True, copy= True, errors= 'raise', downcast= None):
         """
                                 ---What it does---
         This function changes the data type of a given column in a dataframe. Locating it either by name or position.
@@ -196,27 +196,88 @@ class Titan ():
         self.column = column
         self.position = position
 
-        self.choice = choice
+        self.change_num = change_num
         self.copy = copy
         self.errors = errors
+        self.downcast = downcast
 
-        if column != None:
-            print("\nChanging type using the column's name...")
 
-            before = self.df[column].dtype
-            self.df[column] = self.df[column].astype(dtype= self.choice, copy= self.copy, errors= self.errors)
-            after = self.df[column].dtype
 
-            print(f'Changed from {before} to {after}')
+        def change_to_num_or_str(self):
+            if change_num == False:
+                if column != None:
+                    print("\nChanging type using the column's name...")
 
-        elif position != None:
-            print("\nChanging type using the column's position...")
+                    before = self.df[column].dtype
+                    self.df[column] = self.df[column].astype(dtype= str, copy= self.copy, errors= self.errors)
+                    after = self.df[column].dtype
 
-            before = self.df.iloc[:, position].dtype
-            self.df.iloc[:, position] = self.df.iloc[:, position].astype(dtype= self.choice, copy= self.copy, errors= self.errors)
-            after = self.df.iloc[:, position].dtype
+                    print(f'Changed from {before} to {after}')
 
-            print(f'Changed from {before} to {after}')
+                elif position != None:
+                    print("\nChanging type using the column's position...")
+
+                    before = self.df.iloc[:, position].dtype
+                    self.df.iloc[:, position] = self.df.iloc[:, position].astype(dtype= str, copy= self.copy, errors= self.errors)
+                    after = self.df.iloc[:, position].dtype
+
+                    print(f'Changed from {before} to {after}')
+            
+            else:
+                if column != None:
+                    print("\nChanging type using the column's name...")
+
+                    before = self.df[column].dtype
+                    self.df[column] = pd.to_numeric(self.df[column], errors= self.errors)
+                    after = self.df[column].dtype
+
+                    print(f'Changed from {before} to {after}')
+
+                elif position != None:
+                    print("\nChanging type using the column's position...")
+
+                    before = self.df.iloc[:, position].dtype
+                    self.df.iloc[:, position] = pd.to_numeric(self.df.iloc[:, position], errors= self.errors)
+                    after = self.df.iloc[:, position].dtype
+
+                    print(f'Changed from {before} to {after}')
+
+
+        def auxiliary_function (self):
+            """
+            TODO
+                                ---What it does---
+            This function acts only if the regular function is unable to change data types.
+            In such a case, it finds and drops any data that refuses to co-operate.
+            
+                                ---What it needs---
+                - Column to be checked (self.column)
+            
+                                ---What it returns---
+            This function does not return anything.
+            """
+            to_nuke = dict(pd.to_numeric(self.df[self.column], errors='coerce'))
+            
+            print('Unable to change types. Auxiliary function launched!')
+            for e in to_nuke:
+                print (f'- {e}: {to_nuke}\n')
+
+            # for e in to_nuke.keys():
+            #     print(f'Deleting {e}')
+            #     self.column = self.column.drop(e)
+                
+            print('\n... Odd data dropped')
+        try:
+            change_to_num_or_str(self)
+        
+        except ValueError as ve:
+            print('An error occured!...')
+            
+            auxiliary_function(self)
+            print('Rebooting...')
+
+            change_to_num_or_str(self)
+        
 
 
     def nan_manager(self, column= None, position= None, drop_na= False, fill_na= False, axis=0, 
@@ -237,7 +298,7 @@ class Titan ():
                             ---What it returns---
         This function does not return anything
         """
-
+        
         self.column = column
         self.position = position
         self.axis = axis
@@ -437,5 +498,24 @@ class Titan ():
         for column in self.to_plot.columns:
             print(self.to_plot[column])
             func_dict[1](self.to_plot[column])
+
+    def add_to_my_path_dir (self):
+        """
+                            ---What it does---
+        This function adds the libraries current path to your pc path directory.
+
+                            ---What it needs---
+            - The sys and os libraries
         
-        
+                            ---What it returns---
+        This function does not return anything
+        """
+        CURR_DIR = os.path.dirname(os.path.abspath(__file__))
+        print(CURR_DIR)
+        sys.path.append(CURR_DIR)
+        for path in sys.path:
+            print(path)    
+
+
+# Sample = Titan(path= '')
+# Sample.add_to_my_path_dir()
