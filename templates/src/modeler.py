@@ -14,7 +14,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
 
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCVf
+from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import cross_val_score
 
 from sklearn.metrics import accuracy_score
@@ -28,7 +28,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.datasets import make_classification
 
 from sklearn.linear_model import LogisticRegression
-
+from sklearn.linear_model import LinearRegression
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
@@ -55,10 +55,10 @@ class Model_Maker():
         """
         
         if column != None:
-            self.column_encoded = encoder.fit_transform(self.df[column])
+            self.column_encoded = self.label_enc.fit_transform(self.df[column])
         
         elif position != None:
-            self.column_encoded = encoder.fit_transform(self.df.iloc[:, position])
+            self.column_encoded = self.label_enc.fit_transform(self.df.iloc[:, position])
         
         return self.column_encoded
     
