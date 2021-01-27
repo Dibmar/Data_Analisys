@@ -395,17 +395,25 @@ class Titan ():
                                             downcast= self.downcast)
             
 
-    def return_df(self):
+    def return_df(self, wish= False, name= None):
         """
                             ---What it does---
         This function rerturs a processed dataframe.
 
                             ---What it needs---
             - A dataframe (self.dataframe)
+            - wish = True saves de dataframe in .csv format in the CURRENT directory
+            - sep is equal to self.sep (',' by default)
 
                             ---What it returns---
         A dataframe (self.df)
         """
+        name = name + '_' + str(date.today()) + '.csv'
+        
+        print(self.df)
+
+        if wish == True:
+            self.df.to_csv(name, sep= self.sep)
         return self.df
 
 
@@ -498,6 +506,7 @@ class Titan ():
         for column in self.to_plot.columns:
             print(self.to_plot[column])
             func_dict[1](self.to_plot[column])
+
 
     def add_to_my_path_dir (self):
         """
