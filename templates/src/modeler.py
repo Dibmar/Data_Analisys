@@ -109,4 +109,4 @@ class Model_Maker():
         print(self.created_model)
 
         self.linear_model = self.created_model.fit(self.X_train, self.y_train)
-        print(linear_model.coef_)
+        print(self.linear_model.coef_)
