@@ -1,0 +1,7 @@
+{
+    "IP_DNS": "34.229.137.164",
+    "PORT": 25001,
+    "USER": "root",
+    "PASSWORD": "test",
+    "BD_NAME": "datasciencetb_db"
+}
