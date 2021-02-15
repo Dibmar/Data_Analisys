@@ -155,12 +155,15 @@ class Titan ():
 
         col_data = []
         null_numb = []
+        null_per =[]
         for n in range(columns):
             col_data.append(self.df.iloc[:, n].dtype)
             null_numb.append(self.df.iloc[:, n].isnull().sum())
+            null_per.append(round((self.df.iloc[:, n].isnull().sum() / rows) * 100, 2))
         
 
-        report = pd.DataFrame({'Columns': columns_name, 'Data type': col_data, 'NaNs in column': null_numb})
+        report = pd.DataFrame({'Columns': columns_name, 'Data type': col_data, 'NaNs in column': null_numb, 
+                                'Percentage of NaNs': null_per})
 
         title = '\t\tGeneral info on the df:'
         sub_title = 'Shape'
@@ -203,7 +206,26 @@ class Titan ():
 
 
 
-        def change_to_num_or_str(self):
+        def change_to_num_or_str(self, column= None, position= None, change_num= True):
+            """
+            TODO
+                                ---What it does---
+            This function changes the type of the data, from str to numeric or viceversa. By default it will try to change it to numeric.
+
+                                ---What it needs---
+                - Location of the data:
+                    + Column's name (column). Set as None by default
+                    + Position in the column index (column). Set as None by default
+                    Choose one or another!
+                -Wish to change from string to numeric or viceversa (change_num). Set as True (str -> num) by default
+                                
+                                ---What it returns--- 
+            This function does not return anything           
+            """
+
+            self.column = column
+            self.position = position
+
             if change_num == False:
                 if column != None:
                     print("\nChanging type using the column's name...")
@@ -224,21 +246,21 @@ class Titan ():
                     print(f'Changed from {before} to {after}')
             
             else:
-                if column != None:
+                if self.column != None:
                     print("\nChanging type using the column's name...")
 
-                    before = self.df[column].dtype
-                    self.df[column] = pd.to_numeric(self.df[column], errors= self.errors)
-                    after = self.df[column].dtype
+                    before = self.df[self.column].dtype
+                    self.df[self.column] = pd.to_numeric(self.df[self.column], errors= self.errors)
+                    after = self.df[self.column].dtype
 
                     print(f'Changed from {before} to {after}')
 
-                elif position != None:
+                elif self.position != None:
                     print("\nChanging type using the column's position...")
 
-                    before = self.df.iloc[:, position].dtype
-                    self.df.iloc[:, position] = pd.to_numeric(self.df.iloc[:, position], errors= self.errors)
-                    after = self.df.iloc[:, position].dtype
+                    before = self.df.iloc[:, self.position].dtype
+                    self.df.iloc[:, self.position] = pd.to_numeric(self.df.iloc[:, self.position], errors= self.errors)
+                    after = self.df.iloc[:, self.position].dtype
 
                     print(f'Changed from {before} to {after}')
 
@@ -256,29 +278,36 @@ class Titan ():
                                 ---What it returns---
             This function does not return anything.
             """
-            to_nuke = dict(pd.to_numeric(self.df[self.column], errors='coerce'))
-            
             print('Unable to change types. Auxiliary function launched!')
-            for e in to_nuke:
-                print (f'- {e}: {to_nuke}\n')
+            if self.column != None:
+                to_nuke = dict(pd.to_numeric(self.df[self.column], errors='coerce'))
+                             
+                for e in to_nuke:
+                    print (f'- {e}: {to_nuke}\n')
+                    # print(f'Deleting {e}')
+                    # self.column = self.column.drop(e, axis=1)
 
-            # for e in to_nuke.keys():
-            #     print(f'Deleting {e}')
-            #     self.column = self.column.drop(e)
+
+            else:
+                to_nuke = dict(pd.to_numeric(self.df.iloc[:, self.position], errors='coerce'))
+                
+                for e in to_nuke:
+                    print (f'- {e}: {to_nuke}\n')
+                    # print(f'Deleting {e}')
+                    # self.column = self.column.drop(e, axis=1)
                 
             print('\n... Odd data dropped')
         try:
             change_to_num_or_str(self)
         
         except ValueError as ve:
-            print('An error occured!...')
+            print(f'An error occured!{ve}...')
             
             auxiliary_function(self)
             print('Rebooting...')
 
             change_to_num_or_str(self)
         
-
 
     def nan_manager(self, column= None, position= None, drop_na= False, fill_na= False, axis=0, 
                     subset=None, value=None, method=None, limit=None, downcast=None, inplace=True, 
@@ -326,9 +355,10 @@ class Titan ():
 
         elif fill_na == True:
             self.value = value
-            self.method = method
+            self.value = value
             self.limit = limit
             self.downcast = downcast
+            self.method = method
 
             print('Filling data...')
 
@@ -340,21 +370,21 @@ class Titan ():
                                         downcast= self.downcast)
                 
                 elif type(self.value) == str:
-                    methods = ['mean', 'std', 'mode']
+                    values = ['mean', 'std', 'mode']
 
-                    if self.value in methods:
+                    if self.value in values:
                        
-                        if self.value == methods[0]:
+                        if self.value == values[0]:
                             self.df[column].fillna(value= self.df[column].mean(), method= self.method, 
                                         axis= self.axis, inplace= self.inplace, limit= self.limit,
                                         downcast= self.downcast)
 
-                        if self.value == methods[1]:
+                        if self.value == values[1]:
                             self.df[column].fillna(value= self.df[column].std(), method= self.method, 
                                         axis= self.axis, inplace= self.inplace, limit= self.limit,
                                         downcast= self.downcast)
 
-                        if self.value == methods[2]:
+                        if self.value == values[2]:
                             self.df[column].fillna(value= self.df[column].mode(), method= self.method, 
                                         axis= self.axis, inplace= self.inplace, limit= self.limit,
                                         downcast= self.downcast)
@@ -408,24 +438,26 @@ class Titan ():
                             ---What it returns---
         A dataframe (self.df)
         """
-        name = name + '_' + str(date.today()) + '.csv'
-        
-        print(self.df)
+                
+        # print(self.df)
 
         if wish == True:
+            name = name + '_' + str(date.today()) + '.csv'
             self.df.to_csv(name, sep= self.sep)
+        
         return self.df
 
 
-    def quick_plotter(self):
+    def quick_plotter(self, save_image= False, kind= 'bar'):
 
         def num_generator(self):    
             to_plot = self.df.select_dtypes(include=['float64', 'int64'])
 
             return to_plot
 
+        self.save_image =  save_image
 
-        def plot_bar(self, save_image = 0):
+        def plot_bar(self):
             """
                                 ---What it does---
             Plots a barplot with the variable given. And if desired, saves the plot in the same directory as parent file with "<current date>_barplot.jpg" as name.
@@ -438,14 +470,14 @@ class Titan ():
             if self.column.sum() > 0:
                 self.column.plot(kind = 'bar')
 
-                if save_image != 0:
+                if self.save_image == True:
                     name = str(date.today()) + '_barplot.jpg'
                     plt.savefig(name)
             else:
                 print(f'No numeric data to plot')
 
 
-        def plot_line(self, save_image = 0):
+        def plot_line(self):
             """
                                 ---What it does---
             Plots a lineplot with the variable given. And if desired, saves the plot in the same directory as parent file with "<current date>_lineplot.jpg" as name.
@@ -458,14 +490,14 @@ class Titan ():
             if self.column.sum() > 0:
                 self.column.plot()
 
-                if save_image != 0:
+                if self.save_image == True:
                     name = str(date.today()) + '_lineplot.jpg'
                     plt.savefig(name)
             else:
                 print(f'No numeric data to plot')
 
 
-        def plot_pie(self, save_image = 0):
+        def plot_pie(self):
             """
                                 ---What it does---
             Plots a pieplot with the variable given. And if desired, saves the plot in the same directory as parent file with "<current date>_pieplot.jpg" as name.
@@ -491,7 +523,7 @@ class Titan ():
                 plt.tight_layout()
                 plt.show()
                 
-                if save_image != 0:
+                if self.save_image == True:
                     name = str(date.today()) + '_pieplot.jpg'
                     plt.savefig(name)
             else:
@@ -499,13 +531,13 @@ class Titan ():
 
 
         self.to_plot = num_generator(self)
-        func_dict = {1: plot_bar(self), 2: plot_line(self), 3: plot_pie(self)}
+        self.func_dict = {'bar': plot_bar(self), 'line': plot_line(self), 'pie': plot_pie(self)}
 
         print("Your columns will be plotted according to your input.")
 
         for column in self.to_plot.columns:
             print(self.to_plot[column])
-            func_dict[1](self.to_plot[column])
+            self.func_dict[1](self.to_plot[column])
 
 
     def add_to_my_path_dir (self):
@@ -526,5 +558,43 @@ class Titan ():
             print(path)    
 
 
-# Sample = Titan(path= '')
-# Sample.add_to_my_path_dir()
+    def new_df (self, columns = None, position_1 = None, position_2 = None, axis= 1):
+        """
+        ---What it does---
+        This function slices the dataframe. Either by column name or position.
+        ---What it needs---
+            - A list of columns to keep in string format (column). Set as None by default
+            - Two positions for index:
+                + postion_1 is the FIRST position in the interval
+                + postion_2 is the SECOND
+                Either one or the other may be set as None
+            - An axis to filter by (axis). Set as 1 by default
+
+        ---What it returns---
+        This function does not return anything
+        """
+        
+        print('Sclicing dataframe...')
+        if columns != None:
+            self.df = self.df[columns]
+        
+        elif position_1 != None or position_2 != None:
+            if axis == 1:
+                if position_1 == None:
+                    self.df = self.df.iloc[:, : position_2]
+
+                elif position_2 == None:
+                    self.df = self.df.iloc[:, position_1: ]
+                
+                else:
+                    self.df = self.df.iloc[:, position_1: position_2]
+            
+            else:
+                if position_1 == None:
+                    self.df = self.df.iloc[:, position_2: ]
+
+                elif position_2 == None:
+                    self.df = self.df.iloc[position_1:, : ]
+                
+                else:
+                    self.df == self.df.iloc[position_1: position_2, : ]
