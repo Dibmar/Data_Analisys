@@ -3,5 +3,5 @@
     "PORT": 25001,
     "USER": "root",
     "PASSWORD": "test",
-    "BD_NAME": "datasciencetb_db"
+    "BD_NAME": "australia_fires_2"
 }

@@ -1,14 +1,27 @@
+# Needed for stablishing connection with database and queries
 import json
 import pymysql
 from sqlalchemy import create_engine
+
+# For data export as csv and/or dataframe
 import pandas as pd
 
 
 class SQL_manager(object):
+    """
+    This class has been created to establish a connection with a MySQL server database. For this it uses:
+        
+        - The json library
+        - The pymysql library
+        - The slalchemy/create_engine library
+        - The pandas library
 
+    This class can make queries in MySQL and return the results as a dataframe for further exploration.
+    """
     def __init__(self, path):
         self.path = path
 
+    # For connecting your Database
     def gimmie_a_db(self):
         """
                             ---What it does---
@@ -18,6 +31,7 @@ class SQL_manager(object):
                             ---What it needs---
             - MySQL library for Python
             - A path to the settings (path) in string format
+                + The settings file should be a json file
                             
                             ---What it returns---
         This function returns a MySQL database ready for connection
@@ -56,11 +70,11 @@ class SQL_manager(object):
             A MySQL database ready to connect.
             """
 
-            self.IP_DNS = self.json_readed["IP_DNS"]
-            self.USER = self.json_readed["USER"]
-            self.PASSWORD = self.json_readed["PASSWORD"]
-            self.DATABASE = self.json_readed["BD_NAME"]
-            self.PORT = self.json_readed["PORT"]
+            self.IP_DNS = self.settings["IP_DNS"]
+            self.USER = self.settings["USER"]
+            self.PASSWORD = self.settings["PASSWORD"]
+            self.DATABASE = self.settings["BD_NAME"]
+            self.PORT = self.settings["PORT"]
 
             self.sql_db = pymysql.connect(host=self.IP_DNS, user=self.USER, 
                                     password=self.PASSWORD, database=self.DATABASE, 
@@ -83,15 +97,44 @@ class SQL_manager(object):
                             ---What it does---
         Shows the tables in your database
         """
-        self.sql_db.execute_interactive_sql(sql="SHOW TABLES")
+        result = self.cursor.execute("SHOW TABLES")
+        tables = self.cursor.fetchall()
+        table_list = [table for table in tables]
 
+        self.table_dict = {}
+
+        for item in range(result):
+            self.table_dict[item] = table_list[item][0]
+            print(f'{item}: {self.table_dict[item]}')
+
+        return self.table_dict
 
     def ORDER_describe_table (self, table):
         """
                             ---What it does---
         Describes a table in your database
         """
-        self.sql_db.execute_interactive_sql(sql=f"DESCRIBE {table}")
+        self.cursor.execute(f"DESCRIBE {table}")
+        data = [detail for detail in self.cursor.fetchall()]
+
+        name = []
+        d_type = []
+        default_v = []
+        nullable = []
+        prim_k = []
+        collation =[]
+
+        for d in data:
+            name.append(d[0])
+            d_type.append(d[1])
+            nullable.append(d[2])
+            prim_k.append(d[3])
+            default_v.append(d[4])
+            collation.append(d[5])
+
+        self.table_data = pd.DataFrame({'name': name, 'data_type': d_type, 'nullable': nullable,
+                                        'primary_key': prim_k, 'default_value': default_v, 'collation': collation})
+        print(self.table_data)
 
 
     def ORDER_drop_if_already_exists (self, table):
@@ -101,7 +144,7 @@ class SQL_manager(object):
                             ---What it needs---
             - Name of your table (table). 
         """
-        self.sql_db.execute_interactive_sql(sql=f"DROP TABLE IF EXISTS {table}")
+        self.cursor.execute(f"DROP TABLE IF EXISTS {table}")
 
 
     def ORDER_join_tables (self, table, table_2, on, selection= '*', how= 'inner'):
@@ -137,13 +180,44 @@ class SQL_manager(object):
                     SELECT {selection} FROM {table_2}
                     LEFT JOIN {table} ON {on}"""
 
-        self.sql_db.execute_interactive_sql(sql=f"{self.command}")
+        self.cursor.execute(f"{self.command}")
 
 
-    def ORDER_create_a_df_from_sql(self, query):
-        self.df = pd.read_sql(query, con=self.sql_db)
+    def ORDER_create_a_df_from_sql(self, query= None, return_file= True, store= False, name= 'my_file', destination='Output/'):
+        """
+                            ---What it does---
+        Creates a dataframe from a given sql table and returns it and/or saves it locally.
+        This table must be generated through a MySQL query.
 
-        return self.df
+                            ---What it needs---
+            - A valid MySQL query (query). It should be in string format.
+            - A boolean value
+            - A boolean value (store) if you wish to save the dataframe in csv format locally. Set to False by default.
+            - The name of the file to save (name) it should be in string format. Set to 'my_file' by default.
+            - The directory to be saved in (destination). It should be in string format end with '/'. Set as 'Output/' by default.
+        
+                            ---What it returns---
+        This function returns a dataframe object
+        """
+        self.df = pd.read_sql(query, con= self.sql_db)
+
+        if return_file == True and store == False:
+    
+            return self.df
+        
+        elif return_file == True and store == True:
+            self.name = f'{name}.csv'
+
+            if destination.endswith('/'):
+                self.stored_in = f'{destination}{self.name}'
+            
+            else:
+                self.stored_in = f'{destination}/{self.name}'
+
+            print(f'The file will be stored as "{name}"  in {destination}...')
+            self.df.to_csv(self.stored_in)
+
+            return self.df
 
 
     def ORDER_close(self):

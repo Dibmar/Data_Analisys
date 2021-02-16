@@ -2,10 +2,12 @@
 
 import pandas as pd
 import numpy as np
+from pandas.api.types import is_numeric_dtype
 
 # Visualization libs
 
 import matplotlib.pyplot as plt
+import seaborn as sns
 from datetime import date
 
 # Helpful libs
@@ -13,7 +15,20 @@ from datetime import date
 import sys, os
 
 class Titan ():
-    
+    """
+    This class has been created to work with dataframes and allow for a quicker EDA process. For this it uses:
+        
+        - The pandas library
+        - The numpy library
+        - The pandas/api/is_numeric_dtype function
+        - The matplotlib library
+        - The datetime/date library
+        - The sys and os libraries
+
+    This is able to change data types, deal with NaN values and represent columns.
+    It is also capable of returning a dataframe object (for further EDA processing/Machine Learning implentation) or
+    store a csv file in given directory.
+    """
     def __init__(self, path):
         
         # For dataframe construction.
@@ -448,13 +463,9 @@ class Titan ():
         return self.df
 
 
-    def quick_plotter(self, save_image= False, kind= 'bar'):
+    def quick_plotter(self, column= None, save_image= False, kind= 'bar'):
 
-        def num_generator(self):    
-            to_plot = self.df.select_dtypes(include=['float64', 'int64'])
-
-            return to_plot
-
+        self.column = self.df[column]
         self.save_image =  save_image
 
         def plot_bar(self):
@@ -467,58 +478,156 @@ class Titan ():
             If desired (save_image != 0), a jpg image file in the same directory using "<current date>_barplot.jpg" as name.
             """
 
-            if self.column.sum() > 0:
-                self.column.plot(kind = 'bar')
+            if is_numeric_dtype(self.column):
+                
+                if self.column.sum() > 0:
+                
+                    # Plotting data
+                    self.column.plot(kind = 'bar')
+
+                    # Create lables
+                    labels = dict(self.column).keys()
+
+                    # Legend and titles
+                    plt.legend(labels, loc= 'best')
+                    plt.title(self.column.name, loc='center')
+
+                    plt.tight_layout()
+                    plt.show()
+
+                    if self.save_image == True:
+                        name = str(date.today()) + '_barplot.jpg'
+                        plt.savefig(name)
+                
+                else:
+                    print(f'No numeric data to plot')
+            
+            else:
+
+                # Counting values
+                data = self.column.value_counts()
+                
+                # Plotting data
+                data.plot(kind = 'bar')
+
+                # Create lables
+                labels = dict(self.column).keys()
+
+                # Legend and titles
+                plt.legend(labels, loc= 'best')
+                plt.title(self.column.name, loc='center')
+
+                plt.tight_layout()
+                plt.show()
 
                 if self.save_image == True:
                     name = str(date.today()) + '_barplot.jpg'
                     plt.savefig(name)
-            else:
-                print(f'No numeric data to plot')
 
 
         def plot_line(self):
             """
                                 ---What it does---
             Plots a lineplot with the variable given. And if desired, saves the plot in the same directory as parent file with "<current date>_lineplot.jpg" as name.
+                                
                                 ---What it needs---
             A df_column, panda series or dictionary with numerical values
+                                
                                 ---What it returns---
             If desired (save_image != 0), a jpg image file in the same directory using "<current date>_lineplot.jpg" as name.
             """
 
-            if self.column.sum() > 0:
-                self.column.plot()
+            if is_numeric_dtype(self.column):
+                
+                if self.column.sum() > 0:
+                    
+                    # Plotting data
+                    self.column.plot()
+
+                    # Create lables
+                    labels = dict(self.column).keys()
+
+                    # Legend and titles
+                    plt.legend(labels, loc= 'best')
+                    plt.title(self.column.name, loc='center')
+
+                    plt.tight_layout()
+                    plt.show()
+
+                    if self.save_image == True:
+                        name = str(date.today()) + '_lineplot.jpg'
+                        plt.savefig(name)
+                
+                else:
+                    print(f'No numeric data to plot')
+            
+            else:
+                # Counting values
+                data = self.column.value_counts()
+                
+                # Create lables
+                labels = dict(self.column).keys()
+
+                # Legend and titles
+                plt.legend(labels, loc= 'best')
+                plt.title(self.column.name, loc='center')
+
+                plt.tight_layout()
+                plt.show()
 
                 if self.save_image == True:
                     name = str(date.today()) + '_lineplot.jpg'
                     plt.savefig(name)
-            else:
-                print(f'No numeric data to plot')
 
 
         def plot_pie(self):
             """
                                 ---What it does---
             Plots a pieplot with the variable given. And if desired, saves the plot in the same directory as parent file with "<current date>_pieplot.jpg" as name.
+                                
                                 ---What it needs---
             A df_column, panda series or dictionary with numerical values
+                                
                                 ---What it returns---
             If desired (save_image != 0), a jpg image file in the same directory using "<current date>_pieplot.jpg" as name.
             """
 
-            if self.column.sum() > 0:
-                data = self.column
+            if is_numeric_dtype(self.column):
+                
+                if self.column.sum() > 0:
+                    # Create lables
+                    labels = dict(self.column).keys()
 
+                    # Plotting data
+                    plt.pie(self.column, autopct='%1.1f%%', startangle=0, shadow= True, pctdistance = 0.5, labeldistance = 1.2)
+
+                    # Legend and titles
+                    plt.legend(labels, loc= 'best')
+                    plt.title(self.column.name, loc='center')
+
+                    plt.tight_layout()
+                    plt.show()
+                    
+                    if self.save_image == True:
+                        name = str(date.today()) + '_pieplot.jpg'
+                        plt.savefig(name)
+                else:
+                    print ("No numeric data to plot")
+            
+            else:
+                
+                # Counting values
+                data = self.column.value_counts()
+                
                 # Create lables
                 labels = dict(self.column).keys()
 
-                # Plot pie chart
+                # Plotting data
                 plt.pie(data, autopct='%1.1f%%', startangle=0, shadow= True, pctdistance = 0.5, labeldistance = 1.2)
 
                 # Legend and titles
                 plt.legend(labels, loc= 'best')
-                plt.title(self.to_plot.name, loc='center')
+                plt.title(self.column.name, loc='center')
 
                 plt.tight_layout()
                 plt.show()
@@ -526,18 +635,60 @@ class Titan ():
                 if self.save_image == True:
                     name = str(date.today()) + '_pieplot.jpg'
                     plt.savefig(name)
-            else:
-                print ("No numeric data to plot")
 
 
-        self.to_plot = num_generator(self)
-        self.func_dict = {'bar': plot_bar(self), 'line': plot_line(self), 'pie': plot_pie(self)}
+        if kind == 'bar' or kind == 'Bar' or kind == 'BAR' :
+            plot_bar(self)
+        
+        elif kind == 'line' or kind == 'Line' or kind == 'LINE' :
+            plot_line(self)
 
-        print("Your columns will be plotted according to your input.")
+        elif kind == 'pie' or kind == 'Pie' or kind == 'PIE' :
+            plot_pie(self)
 
-        for column in self.to_plot.columns:
-            print(self.to_plot[column])
-            self.func_dict[1](self.to_plot[column])
+
+    def correlation_plot(self, matrix_return= False, save_image= False, vmin=None, vmax=None, 
+                        cmap=None, center=None, robust=False, 
+                        annot=None, fmt='.2g', annot_kws=None, 
+                        linewidths=0, linecolor='white', cbar=True, 
+                        cbar_kws=None, cbar_ax=None, square=False, 
+                        xticklabels='auto', yticklabels='auto', mask=None, 
+                        ax=None):
+        """
+                            ---What it does---
+        This function creates a seaborn heatmap graphic based on the correlation matrix for a given dataframe.
+        It is capable of saving the image and returning de matrix if desired.
+
+                            ---What it needs---
+            - The desire to return the matrix (matrix_return). Set to False by default.
+            - The desire to save the image (save_image) in jpg format. Set to False as default.
+            - The seaborn.heatmap standard parameters. All set in their default configuration.
+
+                            ---What it returns---
+        This function returns the correlation matrix as a dataframe object if desired. And is capable of saving the heatmap as a .jpg
+        """
+        
+        numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+        data = self.df.select_dtypes(include= numerics)
+        
+        self.corr_matrix = data.corr()
+
+        sns.heatmap(data= self.corr_matrix, vmin= vmin, vmax= vmin, 
+                    cmap= cmap, center= center, robust= robust, 
+                    annot= annot, fmt= fmt, annot_kws= annot_kws, 
+                    linewidths= linewidths, linecolor= linecolor, cbar= cbar, 
+                    cbar_kws= cbar_kws, cbar_ax= cbar_ax, square= square, 
+                    xticklabels= xticklabels, yticklabels= yticklabels, mask= mask, 
+                    ax= ax)
+        
+        if save_image == True:
+            
+            name = str(date.today()) + '_heatmap.jpg'
+            plt.savefig(name)
+
+
+        if matrix_return == True:
+            return pd.DataFrame(self.corr_matrix)
 
 
     def add_to_my_path_dir (self):
@@ -598,3 +749,29 @@ class Titan ():
                 
                 else:
                     self.df == self.df.iloc[position_1: position_2, : ]
+
+
+    def store_csv(self, name= None, destination= 'Output/'):
+        """
+                            ---What it does---
+        This function stores a .csv file in a given directory.
+                            
+                            ---What it needs---
+            - The name of your dataframe to store into csv (name). It should be in string format
+            - The storage directory (destination). It should be in string format.
+                * It should ALREADY exist
+                * It should be contained within your path directory
+
+                            ---What it returns---
+        This funtion does not return anything
+        """
+
+        self.name = f'{name}.csv'
+        if destination.endswith('/'):
+            self.stored_in = f'{destination}{self.name}'
+        
+        else:
+            self.stored_in = f'{destination}/{self.name}'
+
+        print(f'The file will be stored as "{name}"  in {destination}...')
+        self.df.to_csv(self.stored_in)
