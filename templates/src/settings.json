@@ -3,5 +3,5 @@
     "PORT": 25001,
     "USER": "root",
     "PASSWORD": "test",
-    "BD_NAME": "australia_fires_2"
+    "BD_NAME": "new_schema"
 }

@@ -21,6 +21,7 @@ class SQL_manager(object):
     def __init__(self, path):
         self.path = path
 
+
     # For connecting your Database
     def gimmie_a_db(self):
         """
@@ -82,14 +83,17 @@ class SQL_manager(object):
             
             self.cursor = self.sql_db.cursor()
             
+            # self.engine = create_engine(f'mysql+pymysql://user:{self.USER}/DB?local_infile=1') 
+            
             print(f"Connected to MySQL server {self.DATABASE}")
                                             
-            return self.sql_db
+            return self.sql_db, self.cursor
 
         self.settings = json_to_dict(self)
-        self.sql_db = creator(self)
+        self.sql_db, self.cursor = creator(self)
 
-        return self.sql_db
+        return self.sql_db, self.cursor
+
 
     # Quick oders for your database
     def ORDER_show_tables (self):
@@ -109,11 +113,13 @@ class SQL_manager(object):
 
         return self.table_dict
 
+
     def ORDER_describe_table (self, table):
         """
                             ---What it does---
         Describes a table in your database
         """
+        
         self.cursor.execute(f"DESCRIBE {table}")
         data = [detail for detail in self.cursor.fetchall()]
 
@@ -135,7 +141,7 @@ class SQL_manager(object):
         self.table_data = pd.DataFrame({'name': name, 'data_type': d_type, 'nullable': nullable,
                                         'primary_key': prim_k, 'default_value': default_v, 'collation': collation})
         print(self.table_data)
-
+    
 
     def ORDER_drop_if_already_exists (self, table):
         """
@@ -183,6 +189,29 @@ class SQL_manager(object):
         self.cursor.execute(f"{self.command}")
 
 
+    def ORDER_insert_into_table(self, table, columns, values):
+        """
+                            ---What it does---
+        This function adds data to a given table using MySQL INSERT INTO statement, printing the query.
+        
+        ---What it needs---
+            - The name of the (table)
+            - The columns of the table (columns). It should be in string format.
+                * In this format -> "(col_1, col_2)"
+            - The values to insert. It should be in string format.
+                * In this way -> "(val_1, val_2), (val_3, val_4);"
+            BOTH table and values MUST coincide in order!
+
+        ---What it returns---
+        This function does not return anything
+        """
+        
+        query = f"INSERT INTO {table} {columns} VALUES {values};"
+        print(query)
+
+        self.cursor.execute(query)
+
+
     def ORDER_create_a_df_from_sql(self, query= None, return_file= True, store= False, name= 'my_file', destination='Output/'):
         """
                             ---What it does---
@@ -220,6 +249,41 @@ class SQL_manager(object):
             return self.df
 
 
+    def ORDER_select_all_from (self, table):
+        """
+                            ---What it does---
+        This function prints all available data in dataframe format.
+        
+                            ---What it needs---
+            - The name of the (table)
+            
+                            ---What it returns---
+        This function does not return anything
+        """
+
+        query = f'SELECT * FROM {table}'
+        
+        table =  pd.read_sql(query, con= self.sql_db)
+
+        print(table)
+
+
+    def ORDER_custom_query(self, query):
+        """
+                            ---What it does---
+        This function executes a custom query. Then prints it.
+
+                            ---What it needs---
+            - A query in string format and in the proper sintax
+
+                            ---What it returns---
+        This function does not return anything
+        """
+        print(query)
+        self.cursor.execute(query)
+
+
+
     def ORDER_close(self):
         """
                                 ---What it does---
@@ -227,4 +291,5 @@ class SQL_manager(object):
         """
 
         print(f"Closing connection connection with MySQL server...")
+        self.cursor.close()
         self.sql_db.close()
