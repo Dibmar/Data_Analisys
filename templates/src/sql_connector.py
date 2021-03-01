@@ -283,6 +283,39 @@ class SQL_manager(object):
         self.cursor.execute(query)
 
 
+    def ORDER_load_data_infile(self, dataframe, table):
+        """
+        TODO
+                            ---What it does---
+        This function executes the LOAD DATA INFILE query. Allowing the user to review it as a safeguard before execution.
+        
+                            ---What it needs---
+            - A dataframe to load into (dataframe)
+            - A table to load the data in
+            Needless to say, both need to coincide in both number and name of columns
+
+                            ---What it returns---
+        This function does not return anything
+        """
+        query = (f"""
+            LOAD DATA LOCAL INFILE 
+            INTO TABLE {table} 
+            COLUMNS TERMINATED BY "," 
+            LINES TERMINATED BY '\\r\\n'
+            IGNORE 1 LINES
+            {tuple(dataframe.columns)}
+            ;""")
+        
+        print(query)
+
+        choice = input('Do you wish to execute? y/n> ')
+
+        if choice == 'y' or choice == 'Y':
+            self.cursor.execute(sql2)
+        
+        else:
+            ORDER_load_data_infile()
+
 
     def ORDER_close(self):
         """
