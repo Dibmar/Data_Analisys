@@ -1,13 +1,15 @@
 # Needed for stablishing connection with database and queries
 import json
 import pymysql
+import psycopg2
 from sqlalchemy import create_engine
+import sys
 
 # For data export as csv and/or dataframe
 import pandas as pd
 
 
-class SQL_manager(object):
+class MySQL_manager(object):
     """
     This class has been created to establish a connection with a MySQL server database. For this it uses:
         
@@ -22,8 +24,29 @@ class SQL_manager(object):
         self.path = path
 
 
+    def json_to_dict(self):
+        """
+                            ---What it does---
+        Loads a json file and turns it into a dictionary.
+                            
+                            ---What it needs---
+            - The path to the file (path) in string format
+        
+                            ---What it returns---
+        A dictionary (settings) with the contents of the json loaded
+        """
+        try:
+            with open(self.path, 'r+') as outfile:
+                settings = json.load(outfile)
+                
+                return settings
+            
+        except Exception as error:
+            raise ValueError(error)
+
+
     # For connecting your Database
-    def gimmie_a_db(self):
+    def CREATE_a_MySQL_db(self):
         """
                             ---What it does---
         This function creates a MySQL database for use in a Python enviroment.
@@ -38,61 +61,31 @@ class SQL_manager(object):
         This function returns a MySQL database ready for connection
         """
 
-        def json_to_dict(self):
-            """
-                                ---What it does---
-            Loads a json file and turns it into a dictionary.
-                                
-                                ---What it needs---
-                - The path to the file (path) in string format
-            
-                                ---What it returns---
-            A dictionary (settings) with the contents of the json loaded
-            """
-            try:
-                with open(self.path, 'r+') as outfile:
-                    self.settings = json.load(outfile)
-                    
-                    return self.settings
+        try:
+            with open(self.path, 'r+') as outfile:
+                settings = json.load(outfile)
                 
-            except Exception as error:
-                raise ValueError(error)
 
+            self.IP_DNS = settings["IP_DNS"]
+            self.USER = settings["USER"]
+            self.PASSWORD = settings["PASSWORD"]
+            self.DATABASE = settings["BD_NAME"]
+            self.PORT = settings["PORT"]
 
-        def creator (self):
-            """
-                                ---What it does---
-            Creates a MySLQ database and returns it.
-                                
-                                ---What it needs---
-                -The connection settings (settings) in dictionary format
-                                
-                                ---What it returns---
-            A MySQL database ready to connect.
-            """
-
-            self.IP_DNS = self.settings["IP_DNS"]
-            self.USER = self.settings["USER"]
-            self.PASSWORD = self.settings["PASSWORD"]
-            self.DATABASE = self.settings["BD_NAME"]
-            self.PORT = self.settings["PORT"]
-
-            self.sql_db = pymysql.connect(host=self.IP_DNS, user=self.USER, 
+            self.connection = pymysql.connect(host=self.IP_DNS, user=self.USER, 
                                     password=self.PASSWORD, database=self.DATABASE, 
                                     port=self.PORT)
             
-            self.cursor = self.sql_db.cursor()
+            self.cursor = self.connection.cursor()
             
             # self.engine = create_engine(f'mysql+pymysql://user:{self.USER}/DB?local_infile=1') 
             
             print(f"Connected to MySQL server {self.DATABASE}")
                                             
-            return self.sql_db, self.cursor
-
-        self.settings = json_to_dict(self)
-        self.sql_db, self.cursor = creator(self)
-
-        return self.sql_db, self.cursor
+            return self.connection, self.cursor
+       
+        except Exception as error:
+            raise ValueError(error)        
 
 
     # Quick oders for your database
@@ -228,7 +221,7 @@ class SQL_manager(object):
                             ---What it returns---
         This function returns a dataframe object
         """
-        self.df = pd.read_sql(query, con= self.sql_db)
+        self.df = pd.read_sql(query, con= self.connection)
 
         if return_file == True and store == False:
     
@@ -263,7 +256,7 @@ class SQL_manager(object):
 
         query = f'SELECT * FROM {table}'
         
-        table =  pd.read_sql(query, con= self.sql_db)
+        table =  pd.read_sql(query, con= self.connection)
 
         print(table)
 
@@ -283,9 +276,8 @@ class SQL_manager(object):
         self.cursor.execute(query)
 
 
-    def ORDER_load_data_infile(self, dataframe, table):
+    def ORDER_load_data_infile(self, dataframe, table, delimiter= ',', new_line= '\\r\\n'):
         """
-        TODO
                             ---What it does---
         This function executes the LOAD DATA INFILE query. Allowing the user to review it as a safeguard before execution.
         
@@ -297,11 +289,12 @@ class SQL_manager(object):
                             ---What it returns---
         This function does not return anything
         """
+        
         query = (f"""
             LOAD DATA LOCAL INFILE 
             INTO TABLE {table} 
-            COLUMNS TERMINATED BY "," 
-            LINES TERMINATED BY '\\r\\n'
+            COLUMNS TERMINATED BY {delimiter} 
+            LINES TERMINATED BY {new_line}
             IGNORE 1 LINES
             {tuple(dataframe.columns)}
             ;""")
@@ -311,10 +304,11 @@ class SQL_manager(object):
         choice = input('Do you wish to execute? y/n> ')
 
         if choice == 'y' or choice == 'Y':
-            self.cursor.execute(sql2)
+            print('Executing query')
+            self.cursor.execute(query)
         
         else:
-            ORDER_load_data_infile()
+            print('Quitting')
 
 
     def ORDER_close(self):
@@ -325,4 +319,61 @@ class SQL_manager(object):
 
         print(f"Closing connection connection with MySQL server...")
         self.cursor.close()
-        self.sql_db.close()
+        self.connection.close()
+
+
+class Postgre_SQL_manager(MySQL_manager):
+    """
+    This class has been created to establish a connection with a Postgre SQL database. For this it uses:
+        
+        - The json library
+        - The psycopg2 library
+        - The slalchemy/create_engine library
+        - The pandas library
+        - The MySQL_manager (parent class)
+
+    This class can make queries in Postgre SQL and return the results as a dataframe for further exploration.
+    """
+
+    def __init__(self, path):
+        self.path = path
+
+
+    def CREATE_a_postgre_db (self):
+        """
+                            ---What it does---
+        This function creates a postgre SQL database connection with Python.
+
+                            ---What it needs---
+            - This function needs access to a json with the connection settings (self.path)
+
+                            ---What it returns---
+        This function returns the cursor object.
+        """
+                
+        try:
+            with open(self.path, 'r+') as outfile:
+                settings = json.load(outfile) 
+                    
+            localhost = settings['localhost']
+            user = settings['user']
+            password = settings['password']
+            dbname = settings['dbname']
+
+            try:
+                self.conection = psycopg2.connect(f"host={localhost} dbname= {dbname} user= {user} password= {password}")   
+                self.cursor =  self.conection.cursor()
+
+                return self.cursor
+
+            except psycopg2.DatabaseError:
+                if self.conection:
+                    self.conection.rollback()
+                
+                print ('Error %s' % psycopg2.DatabaseError)  
+                sys.exit(1)
+                        
+        except Exception as error:
+            raise ValueError(error)
+
+
