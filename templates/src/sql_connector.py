@@ -391,9 +391,6 @@ class PostgreSQL_manager(General_SQL):
         self.path = path
 
 
-
-
-
     def ORDER_show_tables (self):
         query = f"""
         SELECT *
@@ -404,6 +401,28 @@ class PostgreSQL_manager(General_SQL):
         table =  pd.read_sql(query, con= self.connection)
         print(table)
 
+
+    def ORDER_join_tables(self, how= None, select= '*', table_1= None, table_2= None, col_1= None, col_2= None):
+        if how == 'left' or how == 'LEFT':
+            method = "LEFT JOIN"
+        
+        elif how == 'right' or how == 'RIGHT':
+            method = "RIGHT JOIN"
+
+        elif how == 'full' or how == 'FULL':
+            method = 'FULL OUTER JOIN'
+
+        elif how == 'inner' or how == 'INNER':
+            method = 'INNER JOIN'
+
+        query = f"""
+        SELECT {select}
+        FROM {table_1} {method} {table_2} ON ({table_1}.{col_1} = {table_2}.{col_2});
+        """
+        
+        print(query)
+        result = self.cursor.execute(f"{query}")
+        print(result)
 
 
     def ORDER_close(self):
