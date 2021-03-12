@@ -126,7 +126,7 @@ class General_SQL (object):
         This function does not return anything
         """
         
-        print(query)
+        print(f'{query}\n')
         table =  pd.read_sql(query, con= self.connection)
         print(table)
 
@@ -150,6 +150,7 @@ class General_SQL (object):
 
         query = f'SELECT * FROM {table}'
         
+        print(f'{query}\n')
         table =  pd.read_sql(query, con= self.connection)
 
         print(table)
@@ -171,6 +172,7 @@ class General_SQL (object):
                             ---What it returns---
         This function returns a dataframe object
         """
+        print(f'{query}\n')
         self.df = pd.read_sql(query, con= self.connection)
 
         if return_file == True and store == False:
@@ -204,28 +206,29 @@ class General_SQL (object):
             - The method of join (how), by default set to 'inner'.
         """
         if how == 'left' or how == 'LEFT':
-            self.command = f"""SELECT {selection} 
+            query = f"""SELECT {selection} 
                 FROM {table} 
                 LEFT JOIN {table_2} ON {on};"""
         
         elif how == 'right' or how == 'RIGHT':
-            self.command = f"""SELECT {selection} 
+            query = f"""SELECT {selection} 
                 FROM {table} 
                 RIGHT JOIN {table_2} ON {on};"""
 
         elif how == 'inner' or how == 'INNER':
-            self.command = f"""SELECT {selection} 
+            query = f"""SELECT {selection} 
                 FROM {table} 
                 INNER JOIN {table_2} ON {on};"""
 
         elif how == 'full' or how == 'FULL':
-            self.command = f"""SELECT {selection} FROM {table}
+            query = f"""SELECT {selection} FROM {table}
                     LEFT JOIN {table_2} ON {on}
                     UNION
                     SELECT {selection} FROM {table_2}
                     LEFT JOIN {table} ON {on}"""
 
-        self.cursor.execute(f"{self.command}")
+        print(f'{query}\n')
+        self.cursor.execute(query)
         
 
     # For closing your db
@@ -235,9 +238,11 @@ class General_SQL (object):
         Closes conection with your database
         """
 
-        print(f"Closing connection connection with MySQL server...")
+        print(f"Closing connection connection with SQL server...")
         self.cursor.close()
         self.connection.close()
+
+
 
 
 class MySQL_manager(General_SQL):
@@ -263,7 +268,10 @@ class MySQL_manager(General_SQL):
                             ---What it does---
         Shows the tables in your database
         """
-        result = self.cursor.execute("SHOW TABLES")
+        query = "SHOW TABLES"
+        
+        print(f'{query}\n')
+        result = self.cursor.execute(query)
         tables = self.cursor.fetchall()
         table_list = [table for table in tables]
 
@@ -281,8 +289,10 @@ class MySQL_manager(General_SQL):
                             ---What it does---
         Describes a table in your database
         """
-        
-        self.cursor.execute(f"DESCRIBE {table}")
+        query = f"DESCRIBE {table}"
+
+        print(f'{query}\n')
+        self.cursor.execute(query)
         data = [detail for detail in self.cursor.fetchall()]
 
         name = []
@@ -312,7 +322,12 @@ class MySQL_manager(General_SQL):
                             ---What it needs---
             - Name of your table (table). 
         """
-        self.cursor.execute(f"DROP TABLE IF EXISTS {table}")
+        query = f"""
+                 DROP TABLE IF EXISTS {table}"
+                 """
+
+        print(f'{query}\n')
+        self.cursor.execute()
 
 
     def ORDER_insert_into_table(self, table, columns, values):
@@ -333,7 +348,7 @@ class MySQL_manager(General_SQL):
         """
         
         query = f"INSERT INTO {table} {columns} VALUES {values};"
-        print(query)
+        print(f'{query}\n')
 
         self.cursor.execute(query)
 
@@ -361,7 +376,7 @@ class MySQL_manager(General_SQL):
             {tuple(dataframe.columns)}
             ;""")
         
-        print(query)
+        print(f'{query}\n')
 
         choice = input('Do you wish to execute? y/n> ')
 
@@ -392,17 +407,48 @@ class PostgreSQL_manager(General_SQL):
 
 
     def ORDER_show_tables (self):
-        query = f"""
-        SELECT *
-        FROM pg_catalog.pg_tables
-        WHERE schemaname = '{self.schema}'
         """
-        print(query)
+                            ---What it does---
+        This function shows the tables present in a postgre SQL database, then creates a dictionary with all table names.
+
+                            ---What it needs---
+            - The self.schema attiribute. It must be present in the config file!
+
+                            ---What it returns---
+        This fucntion returns a dictionary
+        """
+
+        query = f"""
+                SELECT *
+                FROM pg_catalog.pg_tables
+                WHERE schemaname = '{self.schema}'
+                """
+        print(f'{query}\n')
         table =  pd.read_sql(query, con= self.connection)
         print(table)
 
+        return dict(table['tablename'])
 
-    def ORDER_join_tables(self, how= None, select= '*', table_1= None, table_2= None, col_1= None, col_2= None):
+
+    def ORDER_join_tables(self, how= None, select= '*', table_1= None, table_2= None, col_1= None, col_2= None, wish= False):
+        """
+                            ---What it does---
+        This function joins two given SQL tables. Using the usual (INNER, RIGHT, LEFT... etc.) SQL commands.
+        And if you wish it, it returns a dataframe object.
+
+                            ---What it needs---
+            - A join method (how). Must be string and properly spelled SQL values.
+            - A selection of data to print/return (select). Set as '*' by default.
+            - Your first table (table_1). Must be a table present in your schema.
+            - Your second table (table_2). Must be a table present in your schema.
+            - A column to join by present in table_1 (col_1). Must be string and exist in your table.
+            - A column to join by present in table_2 (col_2). Must be string and exist in your table.
+            - If you wish to return the data (wish). Set to False by default. Must be a boolean.
+            
+                            ---What it returns---
+        This fucntion returns the queried data if desired.
+        """
+
         if how == 'left' or how == 'LEFT':
             method = "LEFT JOIN"
         
@@ -416,22 +462,36 @@ class PostgreSQL_manager(General_SQL):
             method = 'INNER JOIN'
 
         query = f"""
-        SELECT {select}
-        FROM {table_1} {method} {table_2} ON ({table_1}.{col_1} = {table_2}.{col_2});
-        """
+                SELECT {select}
+                FROM "{self.schema}".{table_1} {method} "{self.schema}".{table_2} ON ({table_1}.{col_1} = {table_2}.{col_2});
+                """
         
-        print(query)
-        result = self.cursor.execute(f"{query}")
+        print(f'{query}\n')
+        result = pd.read_sql(query, con= self.connection)
         print(result)
 
+        return result
 
-    def ORDER_close(self):
-        """
-                                ---What it does---
-        Closes conection with your database
-        """
 
-        print(f"Closing connection connection with MySQL server...")
-        self.connection.close()
-        self.cursor.close()
+    def ORDER_describe_table(self, table= None):
+        """
+                            ---What it does---
+        This function describes the data types present in your table.
+
+                            ---What it needs---
+            - The table to describe (table). Must be present in the schema. Must be string.
+            
+                            ---What it returns---
+        This fucntion returns nothing
+        """        
         
+        query = f"""
+                SELECT table_name, column_name, data_type   
+                FROM information_schema.columns 
+                WHERE table_name = '{table}';
+                """
+
+        print(f'{query}\n')
+        result = pd.read_sql(query, con= self.connection)
+        print(result)
+
