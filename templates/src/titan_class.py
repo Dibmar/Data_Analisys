@@ -114,7 +114,7 @@ class Titan ():
         self.low_memory = low_memory
         self.memory_map = memory_map
         self.float_precision = float_precision
-        self.storage_options = storage_options
+        # self.storage_options = storage_options
 
         # Creation of dataframe
         self.df = pd.read_csv(filepath_or_buffer= self.path, sep= self.sep,
@@ -135,8 +135,7 @@ class Titan ():
                                 doublequote= self.doublequote, escapechar= self.escapechar, comment= self.comment,
                                 encoding= self.encoding, dialect= self.dialect, error_bad_lines= self.error_bad_lines, 
                                 warn_bad_lines= self.warn_bad_lines, delim_whitespace= self.delim_whitespace, 
-                                low_memory= self.low_memory, memory_map= self.memory_map, float_precision= self.float_precision,
-                                storage_options= self.storage_options) 
+                                low_memory= self.low_memory, memory_map= self.memory_map, float_precision= self.float_precision) 
 
         if wish == True:
             return self.df
